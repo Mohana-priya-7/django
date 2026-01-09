@@ -8,9 +8,9 @@ class Migration(migrations.Migration):
             name='Product',
             fields=[
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('Name', models.CharField(max_length=255)),
-                ('Price', models.IntegerField()), 
-                ('Description', models.CharField(max_length=1000)),
+                ('name', models.CharField(max_length=255)),
+                ('price', models.IntegerField()), 
+                ('description', models.CharField(max_length=1000)),
                 ('created_at', models.DateTimeField(auto_now_add=True)),
             ],
         ),  
