@@ -1,83 +1,108 @@
-from rest_framework import viewsets
-from rest_framework.decorators import action
+from itertools import product
+from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
+from rest_framework.generics import GenericAPIView
+from django.contrib.auth import authenticate
 from .models import Product
+from .serializers import LoginSerializer
 from .serializers import ProductSerializer
-from drf_spectacular.utils import extend_schema, OpenApiParameter
-class ProductViewSet(viewsets.ModelViewSet):
-    queryset = Product.objects.all()
-    serializer_class = ProductSerializer 
+from .serializers import DiscountSerializer
+from drf_spectacular.utils import extend_schema
+
+class ProductListCreateAPIView(APIView):
     @extend_schema(
-            parameters=[
-                OpenApiParameter(
-                    name='min_price',
-                    type=int,
-                    location=OpenApiParameter.QUERY,
-                    description='Minimum price to filter expensive products',
-                )
-            ]
+        responses=ProductSerializer(many=True)
     )
-    @action(detail=False, methods=['get'])
-    def expensive(self, request):
-            min_price=request.query_params.get('min_price',50000)
-            products = Product.objects.filter(price__gt=min_price)
-            serializer = self.get_serializer(products, many=True)
-            return Response(serializer.data)
+    def get(self, request):
+        products=Product.objects.all()
+        serializers=ProductSerializer(products, many=True)
+        return Response(serializers.data,status=status.HTTP_200_OK)
     
-    @action(detail=True, methods=['post'])
-    def discount(self,request,pk=None):
-        product=self.get_object()
-        percent=int(request.data.get('percent',0))
-        product.price -= (product.price*percent//100)
-        product.save()
-        return Response({
-        "message":f"Discount of {percent}% applied.",
-        "new_price":product.price
-    })
+    @extend_schema(
+        request=ProductSerializer,
+        responses=ProductSerializer
+    )
+    def post(self,request):
+        serializer= ProductSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+class ProductUpdateDeleteAPIView(APIView):
+    @extend_schema(
+        request=ProductSerializer,
+        responses=ProductSerializer)
+    def put(self,request,pk):
+        try:
+            product=Product.objects.get(pk=pk)
+        except Product.DoesNotExist:
+            return Response({'error':'Product not found'}, status=status.HTTP_404_NOT_FOUND)
+        serializer=ProductSerializer(product, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    @action(detail=True, methods=['delete'])
-    def remove(self, request, pk=None):
-        product = self.get_object()
+    @extend_schema(
+        responses={204: None}
+    )
+    def delete(self, request, pk):
+        try:
+            product = Product.objects.get(pk=pk)
+        except Product.DoesNotExist:
+            return Response({'error': 'Product not found'}, status=status.HTTP_404_NOT_FOUND)
         product.delete()
-        return Response(
-            {"message": "Product deleted successfully"},
-            status=status.HTTP_204_NO_CONTENT
-        )
+        return Response(status=status.HTTP_204_NO_CONTENT)
     
-    @action(detail=True, methods=['patch'])
-    def modify(self, request, pk=None):
-        product = self.get_object()
-        price = request.data.get('price')
-        if price is None:
-            return Response({"message": "price is required"}, status=400)
-        product.price = int(price)
-        product.save()
-        return Response({
-        "message": "Price updated successfully",
-        "price": product.price
-    })
-
-def create(self, request, *args, **kwargs): 
-        product, created = Product.objects.get_or_create(
-            name=request.data.get("name"),
-            defaults={
-                "price": request.data.get("price"),
-                "description": request.data.get("description"),
-            }
-        )
-        if created:
-            serializer = self.get_serializer(product)
+class UserLogin(APIView):
+    @extend_schema(
+    request=LoginSerializer,
+    responses={200: dict, 401: dict}
+)
+    def post(self, request):
+        username = request.data.get("username")
+        password = request.data.get("password")
+        user = authenticate(username=username, password=password)
+        if user:
             return Response(
-                serializer.data,
-                status=status.HTTP_201_CREATED
-            )
-        else:
-            serializer = self.get_serializer(product)
-            return Response(
-                {
-                    "message": "Product already exists",
-                    "product": serializer.data
-                },
+                {"message": "Login successful"},
                 status=status.HTTP_200_OK
             )
+        return Response(
+            {"error": "Invalid credentials"},
+            status=status.HTTP_401_UNAUTHORIZED
+        )
+class ProductTotalSales(GenericAPIView):
+    @extend_schema(
+        responses={200:{
+                'type': 'object',
+                'properties': {
+                    'Total': {'type': 'integer'}
+                }
+            }
+        }
+    )
+    def get(self, request):
+        t = sum(product.price for product in Product.objects.all())
+        return Response({'Total' : t})
+class Discount(GenericAPIView):
+    serializer_class = DiscountSerializer
+    @extend_schema(
+        request=DiscountSerializer)
+    def put(self, request, pk):
+        serializer = self.get_serializer(data=request.data)
+        if serializer.is_valid():
+           discount = serializer.validated_data["discount"]
+        else:
+            return Response(serializer.errors, status=400)
+        product = Product.objects.get(pk=pk)
+        dprice = int(product.price - (product.price * discount / 100))
+        product.price = dprice
+        product.save()
+        return Response({
+            "product": product.name,
+            "original_price": product.price,
+            "discounted_price": dprice
+        },status=status.HTTP_200_OK)
