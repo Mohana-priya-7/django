@@ -8,7 +8,7 @@ try:
         cursor.execute("SELECT version();")
         version = cursor.fetchone()
         print("=" * 60)
-        print("✅ SUCCESS! PostgreSQL connected successfully!")
+        print("✅ SUCCESS! PostgreSQL Connected Successfully!")
         print("=" * 60)
         print(f"Database version: {version[0]}")
         print("=" * 60)
