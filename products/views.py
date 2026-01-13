@@ -10,7 +10,7 @@ from .serializers import ProductSerializer
 from .serializers import DiscountSerializer
 from drf_spectacular.utils import extend_schema
 
-class ProductListCreateAPIView(APIView):
+class ListCreate(APIView):
     @extend_schema(
         responses=ProductSerializer(many=True)
     )
@@ -30,7 +30,7 @@ class ProductListCreateAPIView(APIView):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
-class ProductUpdateDeleteAPIView(APIView):
+class UpdateDelete(APIView):
     @extend_schema(
         request=ProductSerializer,
         responses=ProductSerializer)
@@ -87,6 +87,7 @@ class ProductTotalSales(GenericAPIView):
     def get(self, request):
         t = sum(product.price for product in Product.objects.all())
         return Response({'Total' : t})
+    
 class Discount(GenericAPIView):
     serializer_class = DiscountSerializer
     @extend_schema(
