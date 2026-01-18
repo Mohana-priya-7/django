@@ -2,3 +2,4 @@ Django>=4.2
 djangorestframework>=3.14
 psycopg2-binary
 drf-spectacular
+djangorestframework-simplejwt>=5.3.0
