@@ -1,6 +1,5 @@
 from pathlib import Path
 from datetime import timedelta
-
 BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure--zni_ik)^wwrr3%l$*2(g3(n*v!)56cwuk%m$tzljm!)-497x9'
 DEBUG = True
@@ -16,7 +15,14 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework_simplejwt',
     'drf_spectacular',
-]   
+] 
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587 
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = 's.mohanapriya2174@gmail.com'
+EMAIL_HOST_PASSWORD = 'aqnr ugss mnhk cpre'
+  
 REST_FRAMEWORK = {
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
     'DEFAULT_AUTHENTICATION_CLASSES': (
