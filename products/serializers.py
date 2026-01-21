@@ -1,10 +1,7 @@
 from rest_framework import serializers
 from django.contrib.auth.models import User
-
 from products.utils import validate_strong_password
 from .models import Product
-from products.utils import validate_strong_password
-
 class UserSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, required=True, style={'input_type': 'password'})
     password2 = serializers.CharField(write_only=True, required=True, style={'input_type': 'password'})
