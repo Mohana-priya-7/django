@@ -4,6 +4,15 @@ from products.utils import validate_strong_password
 from .models import Product
 class UserSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, required=True, style={'input_type': 'password'})
+    
+    """password – Field name that will appear in API requests/responses
+serializers.CharField(...) – Specifies this is a text field that accepts string input
+write_only=True – The password is only accepted during input (when creating/updating users). It's never included in API responses for security reasons—you don't want passwords leaked in responses.
+Why write_only=True?When someone sends a POST request with a password, the serializer accepts it (write)
+When you retrieve a user from the API, the password field won't be returned (read is blocked)
+This prevents accidental exposure of sensitive password data
+In context: The full line in your code also has required=True (password must be provided) and style={'input_type': 'password'} (for UI rendering as a password field).
+    """
     password2 = serializers.CharField(write_only=True, required=True, style={'input_type': 'password'})
     class Meta:
         model = User
@@ -11,16 +20,10 @@ class UserSerializer(serializers.ModelSerializer):
         extra_kwargs = {'email': {'required': True}}    
     def validate_password(self, value):
         return validate_strong_password(value)
-    def validate(self, data):
-        if data['password'] != data.get('password2'):
-            raise serializers.ValidationError({'Password': "Passwords must match."})
-        return data
     def create(self, validated_data):
-        validated_data.pop('password2')
         user = User.objects.create(
             username=validated_data['username'],
-            email=validated_data['email']
-        )
+            email=validated_data['email'])
         user.set_password(validated_data['password'])
         user.save()
         return user

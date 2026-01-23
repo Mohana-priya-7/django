@@ -34,13 +34,11 @@ class Register(APIView):
                 status=status.HTTP_201_CREATED
             )
         return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)
-    
 class ChangePasswordView(APIView):
     permission_classes = [IsAuthenticated]
     @extend_schema(  
         request=ChangePasswordSerializer,
-        responses={200: dict, 400: dict}
-    )
+        responses={200: dict, 400: dict})
     def post(self, request):
         serializer = ChangePasswordSerializer(data=request.data)
         if serializer.is_valid():
@@ -59,7 +57,6 @@ class ChangePasswordView(APIView):
                 status=status.HTTP_200_OK
             )
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
 class ForgotPasswordView(APIView):
     permission_classes = [AllowAny]
     @extend_schema(
@@ -88,7 +85,6 @@ class ForgotPasswordView(APIView):
             )
             return Response({"message": "OTP sent to email successfully"}, status=200)
         return Response(serializer.errors, status=400)
-
 class VerifyOTPView(APIView):
     permission_classes = [AllowAny]
     @extend_schema(
@@ -109,7 +105,6 @@ class VerifyOTPView(APIView):
             except User.DoesNotExist:
                 return Response({"error": "User not found"}, status=400)
         return Response(serializer.errors, status=400)
-
 class ResetPasswordView(APIView):
     permission_classes = [AllowAny]
     @extend_schema(
@@ -135,7 +130,6 @@ class ResetPasswordView(APIView):
             except User.DoesNotExist:
                 return Response({"error": "User not found"}, status=400)
         return Response(serializer.errors, status=400)
-
 class ListCreate(APIView):
     permission_classes = [IsAuthenticated]
     @extend_schema(
@@ -155,7 +149,6 @@ class ListCreate(APIView):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    
 class UpdateDelete(APIView):
     permission_classes = [IsAuthenticated]
     @extend_schema(
@@ -180,8 +173,7 @@ class UpdateDelete(APIView):
         except Product.DoesNotExist:
             return Response({'error': 'Product not found'}, status=status.HTTP_404_NOT_FOUND)
         product.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
-    
+        return Response(status=status.HTTP_204_NO_CONTENT)    
 class ProductTotalSales(GenericAPIView):
     permission_classes = [IsAuthenticated]
     @extend_schema(
@@ -196,7 +188,6 @@ class ProductTotalSales(GenericAPIView):
     def get(self, request):
         t = sum(product.price for product in Product.objects.all())
         return Response({'Total' : t})
-
 class Discount(GenericAPIView):
     permission_classes = [IsAuthenticated]
     serializer_class = DiscountSerializer
